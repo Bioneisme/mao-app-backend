@@ -1,25 +1,25 @@
 import logger from "../config/logger";
 import {DI} from "../index";
 import {generateJWT, verifyJWT} from "../helpers/jwt";
+import {wrap} from "@mikro-orm/core";
 import {Request, Response} from "express";
 import {UserRequest} from "../types";
 import bcryptjs from "bcryptjs";
 import {Users} from "../entities";
-import {wrap} from "@mikro-orm/core";
 
 async function register(req: Request, res: Response) {
     try {
-        const {username, login, password} = req.body;
+        const {email, password, full_name, date_of_birth, region, city, specialization} = req.body;
 
-        if (!username || !password || !login) {
-            res.status(400).send("Missing username, email or password");
+        if (!email || !password) {
+            res.status(400).json({error: true, message: "Missing email or password"});
             return;
         }
 
-        const existingUser = await DI.em.findOne(Users, {login});
+        const existingUser = await DI.em.findOne(Users, {email});
 
         if (existingUser) {
-            res.status(400).send("User already exists");
+            res.status(400).json({error: true, message: "User already exists"});
             return;
         }
 
@@ -27,15 +27,19 @@ async function register(req: Request, res: Response) {
         const hashedPassword = await bcryptjs.hash(password, slat);
 
         const user = DI.em.create(Users, {
-            username,
-            login,
-            password: hashedPassword
+            email,
+            password: hashedPassword,
+            full_name,
+            date_of_birth,
+            region,
+            city,
+            specialization
         });
 
         await DI.em.persistAndFlush(user);
 
         if (!user) {
-            res.status(500).send("Cannot create user");
+            res.status(500).json({error: true, message: "Something went wrong"});
             return;
         }
 
@@ -47,24 +51,24 @@ async function register(req: Request, res: Response) {
 
 async function login(req: Request, res: Response) {
     try {
-        const {login, password} = req.body;
+        const {email, password} = req.body;
 
-        if (!login || !password) {
-            res.status(400).send("Missing login or password");
+        if (!email || !password) {
+            res.status(400).json({error: true, message: "Missing email or password"});
             return;
         }
 
-        const user = await DI.em.findOne(Users, {login});
+        const user = await DI.em.findOne(Users, {email});
 
         if (!user) {
-            res.status(400).send("User does not exist");
+            res.status(400).json({error: true, message: "User not found"});
             return;
         }
 
         const isPasswordValid = await bcryptjs.compare(password, user.password);
 
         if (!isPasswordValid) {
-            res.status(400).send("Invalid password");
+            res.status(400).json({error: true, message: "Invalid password"});
             return;
         }
 
@@ -80,7 +84,7 @@ async function getCurrentUser(req: Request, res: Response) {
         const user = await DI.em.findOne(Users, {id});
 
         if (!user) {
-            res.status(404).send("User not found");
+            res.status(404).json({error: true, message: "User not found"});
             return;
         }
 
@@ -98,7 +102,7 @@ async function validate(req: Request, res: Response) {
         const id: number = (decoded as { id: number }).id;
 
         const user = await DI.em.findOne(Users, {id});
-        if (!user) return res.status(400).send("User not found");
+        if (!user) return res.status(400).json({error: true, message: "User not found"});
         (req as UserRequest).user = user;
 
         return res.status(200).json({...(user), token: generateJWT(user.id)});
@@ -111,7 +115,7 @@ async function deleteUser(req: Request, res: Response) {
     try {
         const {id} = req.params;
         const user = await DI.em.findOne(Users, {id: +id});
-        if (!user) return res.status(400).send("User not found");
+        if (!user) return res.status(400).json({error: true, message: "User not found"});
 
         await DI.em.removeAndFlush(user);
 
@@ -123,18 +127,18 @@ async function deleteUser(req: Request, res: Response) {
 
 async function editUser(req: Request, res: Response) {
     try {
-        const {id, username, login} = req.body;
-        if (!id || !username || !login) {
-            res.status(400).send("Missing some fields");
+        const {id, email, full_name} = req.body;
+        if (!id || !email || !full_name) {
+            res.status(400).json({error: true, message: "Missing id, email or full_name"});
             return;
         }
 
         const user = await DI.em.findOne(Users, {id});
-        if (!user) return res.status(400).send("User not found");
+        if (!user) return res.status(400).json({error: true, message: "User not found"});
 
         wrap(user).assign({
-            username,
-            login
+            email,
+            full_name
         });
 
         await DI.em.persistAndFlush(user);
@@ -149,7 +153,7 @@ async function getUser(req: Request, res: Response) {
     try {
         const {id} = req.params;
         const user = await DI.em.findOne(Users, {id: +id});
-        if (!user) return res.status(400).send("User not found");
+        if (!user) return res.status(400).json({error: true, message: "User not found"});
 
         return res.status(200).json({user});
     } catch (e) {
@@ -160,7 +164,7 @@ async function getUser(req: Request, res: Response) {
 async function getUsers(req: Request, res: Response) {
     try {
         const users = await DI.em.find(Users, {});
-        if (!users) return res.status(400).send("Users not found");
+        if (!users) return res.status(400).json({error: true, message: "Users not found"});
 
         return res.status(200).json({users});
     } catch (e) {
