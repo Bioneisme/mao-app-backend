@@ -88,8 +88,8 @@ CREATE TABLE IF NOT EXISTS public.drug_food_interactions
     general_value character varying(255),
     general_degree character varying(255),
     type character varying(255),
-    drug_food_names_id numeric,
-    drug_food_descriptions_id numeric,
+    drug_food_names_id integer,
+    drug_food_descriptions_id integer,
     CONSTRAINT drug_food_descriptions_id FOREIGN KEY (drug_food_descriptions_id)
     REFERENCES public.drug_food_descriptions (id) MATCH SIMPLE
     ON UPDATE NO ACTION
