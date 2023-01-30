@@ -1,7 +1,8 @@
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import usersRoutes from "./routes/userRoute";
-import wifiRoute from "./routes/medRoute";
+import userRoute from "./routes/userRoute";
+import medRoute from "./routes/medRoute";
+import postRoute from "./routes/postRoute";
 import {CLIENT_URL, SERVER_PORT} from "./config/settings";
 import {config} from "./config/mikro-orm";
 import logger from "./config/logger";
@@ -24,8 +25,9 @@ app.use(cors({
 app.use(cookieParser());
 
 app.use(logging);
-app.use("/api/users", usersRoutes);
-app.use("/api/med", wifiRoute);
+app.use("/api/users", userRoute);
+app.use("/api/med", medRoute);
+app.use("/api/posts", postRoute);
 
 app.listen(SERVER_PORT, async () => {
     DI.orm = await MikroORM.init(config);

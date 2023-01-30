@@ -12,6 +12,17 @@ CREATE TABLE IF NOT EXISTS users
     updated_at character varying(50)
 );
 
+CREATE TABLE IF NOT EXISTS posts
+(
+    id SERIAL NOT NULL PRIMARY KEY,
+    title character varying(100) NOT NULL,
+    text text NOT NULL,
+    image_url text,
+    author character varying(100) NOT NULL,
+    created_at character varying(50),
+    updated_at character varying(50)
+);
+
 CREATE TABLE IF NOT EXISTS public.general
 (
     id SERIAL NOT NULL PRIMARY KEY,
