@@ -7,7 +7,7 @@ export class Catalogue {
     id!: number;
 
     @ManyToOne({type: General})
-    general_id!: General;
+    general!: General;
 
     @Property({type: "string"})
     pd_ru!: string;
@@ -42,11 +42,11 @@ export class Catalogue {
     @Property({type: "string"})
     notice!: string;
 
-    constructor(id: number, general_id: General, pd_ru: string, pk_ru: string, indications: string, side_effects_ru: string,
+    constructor(id: number, general: General, pd_ru: string, pk_ru: string, indications: string, side_effects_ru: string,
                 contraindications_ru: string, pregnancy: string, liver_disorders_ru: string, kidneys_disorders_ru: string,
                 children_ru: string, elders_ru: string, notice: string) {
         this.id = id;
-        this.general_id = general_id;
+        this.general = general;
         this.pd_ru = pd_ru;
         this.pk_ru = pk_ru;
         this.indications = indications;

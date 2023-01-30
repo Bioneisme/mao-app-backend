@@ -9,6 +9,7 @@ import {
     DrugFoodNames,
     General
 } from "../entities";
+import {wrap} from "@mikro-orm/core";
 
 class MedController {
     async getCatalogue(req: Request, res: Response, next: NextFunction) {
@@ -19,6 +20,143 @@ class MedController {
             return next();
         } catch (e) {
             logger.error(`getCatalogue: ${e}`);
+        }
+    }
+
+    async getMedicament(req: Request, res: Response, next: NextFunction) {
+        try {
+            const {id} = req.params;
+            const medicament = await DI.em.findOne(Catalogue, {id: +id}, {populate: true});
+            if (!medicament) return res.status(400).send("Medicament not found");
+            res.status(200).json({medicament});
+            return next();
+        } catch (e) {
+            logger.error(`getMedicament: ${e}`);
+        }
+    }
+
+    async createMedicament(req: Request, res: Response, next: NextFunction) {
+        try {
+            const {
+                id, name_ru, name_kaz, name_eng, class_ru, class_kaz, class_eng, group,
+                pd_ru, pk_ru, indications, side_effects_ru, contraindications_ru,
+                pregnancy, liver_disorders_ru, kidneys_disorders_ru, children_ru, notice, elders_ru
+            } = req.body;
+            const general = DI.em.create(General, {
+                id,
+                name_ru,
+                name_kaz,
+                name_eng,
+                class_ru,
+                class_kaz,
+                class_eng,
+                group
+            });
+            await DI.em.persistAndFlush(general).catch(e => {
+                logger.error(`createMedicament: ${e}`);
+                res.status(400).send(`General not created: ${e}`);
+                return next();
+            });
+            const medicament = DI.em.create(Catalogue, {
+                id,
+                general,
+                pd_ru,
+                pk_ru,
+                indications,
+                side_effects_ru,
+                contraindications_ru,
+                pregnancy,
+                liver_disorders_ru,
+                kidneys_disorders_ru,
+                children_ru,
+                notice,
+                elders_ru
+            });
+
+            await DI.em.persistAndFlush(medicament).catch(e => {
+                logger.error(`createMedicament: ${e}`);
+                res.status(400).send(`Medicament not created: ${e}`);
+                return next();
+            });
+
+            res.status(200).json({medicament});
+            return next();
+        } catch (e) {
+            logger.error(`createMedicament: ${e}`);
+        }
+    }
+
+    async deleteMedicament(req: Request, res: Response, next: NextFunction) {
+        try {
+            const {id} = req.params;
+
+            const medicament = await DI.em.findOne(Catalogue, {id: +id}, {populate: true});
+            if (!medicament) return res.status(400).send("Medicament not found");
+            await DI.em.removeAndFlush(medicament);
+
+            const general = await DI.em.findOne(General, {id: +id});
+            if (!general) return res.status(400).send("General not found");
+            await DI.em.removeAndFlush(general);
+
+            res.status(200).send('OK');
+            return next();
+        } catch (e) {
+            logger.error(`deleteMedicament: ${e}`);
+        }
+    }
+
+    async editMedicament(req: Request, res: Response, next: NextFunction) {
+        try {
+            const {
+                id, name_ru, name_kaz, name_eng, class_ru, class_kaz, class_eng, group,
+                pd_ru, pk_ru, indications, side_effects_ru, contraindications_ru,
+                pregnancy, liver_disorders_ru, kidneys_disorders_ru, children_ru, notice, elders_ru
+            } = req.body;
+            const general = await DI.em.findOne(General, {id: +id});
+            if (!general) return res.status(400).send("General not found");
+
+            wrap(general).assign({
+                name_ru,
+                name_kaz,
+                name_eng,
+                class_ru,
+                class_kaz,
+                class_eng,
+                group
+            });
+
+            await DI.em.persistAndFlush(general).catch(e => {
+                logger.error(`editMedicament: ${e}`);
+                res.status(400).send(`General not edited: ${e}`);
+                return next();
+            });
+
+            const medicament = await DI.em.findOne(Catalogue, {id: +id}, {populate: true});
+            if (!medicament) return res.status(400).send("Medicament not found");
+            wrap(medicament).assign({
+                pd_ru,
+                pk_ru,
+                indications,
+                side_effects_ru,
+                contraindications_ru,
+                pregnancy,
+                liver_disorders_ru,
+                kidneys_disorders_ru,
+                children_ru,
+                notice,
+                elders_ru
+            });
+
+            await DI.em.persistAndFlush(medicament).catch(e => {
+                logger.error(`editMedicament: ${e}`);
+                res.status(400).send(`Medicament not edited: ${e}`);
+                return next();
+            });
+
+            res.status(200).json({medicament});
+            return next();
+        } catch (e) {
+            logger.error(`editMedicament: ${e}`);
         }
     }
 

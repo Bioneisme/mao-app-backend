@@ -1,4 +1,4 @@
-import {Request, Response} from "express";
+import {NextFunction, Request, Response} from "express";
 import logger from "../config/logger";
 import {DI} from "../index";
 import {Posts} from "../entities";
@@ -6,7 +6,7 @@ import {wrap} from "@mikro-orm/core";
 
 
 class postController {
-    async createPost(req: Request, res: Response) {
+    async createPost(req: Request, res: Response, next: NextFunction) {
         try {
             const {title, text, author, image_url} = req.body;
             if (!title || !text || !author) {
@@ -15,46 +15,50 @@ class postController {
             }
             const post = DI.em.create(Posts, {title, text, author, image_url});
             await DI.em.persistAndFlush(post);
-            return res.status(200).json({post});
+            res.status(200).json({post});
+            return next();
         } catch (e) {
             logger.error(`createPost: ${e}`);
         }
     }
 
-    async getPost(req: Request, res: Response) {
+    async getPost(req: Request, res: Response, next: NextFunction) {
         try {
             const {id} = req.params;
             const post = await DI.em.findOne(Posts, {id: +id});
             if (!post) return res.status(400).json({error: true, message: "Post not found"});
-            return res.status(200).json({post});
+            res.status(200).json({post});
+            return next();
         } catch (e) {
             logger.error(`getPost: ${e}`);
         }
     }
 
-    async getPosts(req: Request, res: Response) {
+    async getPosts(req: Request, res: Response, next: NextFunction) {
         try {
             const posts = await DI.em.find(Posts, {});
             if (!posts) return res.status(400).json({error: true, message: "Posts not found"});
-            return res.status(200).json({posts});
+            res.status(200).json({posts});
+            return next();
         } catch (e) {
             logger.error(`getPosts: ${e}`);
         }
     }
 
-    async deletePost(req: Request, res: Response) {
+    async deletePost(req: Request, res: Response, next: NextFunction) {
         try {
             const {id} = req.params;
             const post = await DI.em.findOne(Posts, {id: +id});
             if (!post) return res.status(400).json({error: true, message: "Post not found"});
             await DI.em.removeAndFlush(post);
-            return res.status(200).json('OK');
+            res.status(200).json('OK');
+            return next();
         } catch (e) {
             logger.error(`deletePost: ${e}`);
         }
     }
 
-    async editPost(req: Request, res: Response) {
+    async editPost(req: Request, res: Response, next: NextFunction) {
         try {
             const {id, title, text, author, image_url} = req.body;
             if (!id || !title || !text || !author) {
@@ -70,7 +74,8 @@ class postController {
                 image_url
             });
             await DI.em.persistAndFlush(post);
-            return res.status(200).json({post});
+            res.status(200).json({post});
+            return next();
         } catch (e) {
             logger.error(`editPost: ${e}`);
         }

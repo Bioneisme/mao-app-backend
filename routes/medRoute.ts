@@ -5,6 +5,11 @@ const router: Router = Router();
 
 router.get('/getCatalogue', medController.getCatalogue);
 router.get('/getGeneral', medController.getGeneral);
+router.get('/getMedicament/:id', medController.getMedicament);
+router.post('/createMedicament', medController.createMedicament);
+router.delete('/deleteMedicament/:id', medController.deleteMedicament);
+router.patch('/editMedicament', medController.editMedicament);
+
 router.get('/getDrugFoodInteractions', medController.getDrugFoodInteractions);
 router.get('/getDrugDrugInteractions', medController.getDrugDrugInteractions);
 router.get('/getDrugFoodNames', medController.getDrugFoodNames);
